@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SlitherStakes - Snake Battle Royale</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Home Screen -->
+    <div id="home-screen" class="screen active">
+        <div class="container">
+            <h1 class="title">SlitherStakes</h1>
+            <p class="subtitle">Snake Battle Royale with Kill Bounties</p>
+
+            <div class="name-input">
+                <input type="text" id="player-name" placeholder="Enter your name" maxlength="16" autocomplete="off">
+            </div>
+
+            <div class="tier-selection">
+                <h3>Select Stakes</h3>
+                <div id="tier-buttons" class="tier-buttons">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <div class="info-box">
+                <h4>How It Works</h4>
+                <ul>
+                    <li>Eat food to grow longer</li>
+                    <li>Kill other snakes by making them hit your body</li>
+                    <li>Earn <span class="highlight">80%</span> bounty on kills</li>
+                    <li>Cash out anytime to keep your earnings</li>
+                </ul>
+            </div>
+
+            <div class="controls-info">
+                <p><strong>Controls:</strong> Mouse to steer | Click/Space to boost</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game-screen" class="screen">
+        <canvas id="game-canvas"></canvas>
+
+        <!-- HUD -->
+        <div id="hud">
+            <div class="hud-left">
+                <div class="hud-item">
+                    <span class="label">Length</span>
+                    <span id="hud-length" class="value">10</span>
+                </div>
+                <div class="hud-item">
+                    <span class="label">Kills</span>
+                    <span id="hud-kills" class="value">0</span>
+                </div>
+                <div class="hud-item earnings">
+                    <span class="label">Earnings</span>
+                    <span id="hud-earnings" class="value">$0.00</span>
+                </div>
+            </div>
+            <div class="hud-center">
+                <button id="cashout-btn" class="cashout-btn">Cash Out</button>
+            </div>
+            <div class="hud-right">
+                <div id="leaderboard" class="leaderboard">
+                    <h4>Leaderboard</h4>
+                    <ol id="leaderboard-list">
+                        <!-- Populated dynamically -->
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kill Feed -->
+        <div id="kill-feed" class="kill-feed">
+            <!-- Populated dynamically -->
+        </div>
+
+        <!-- Minimap -->
+        <div id="minimap" class="minimap">
+            <canvas id="minimap-canvas" width="150" height="150"></canvas>
+        </div>
+    </div>
+
+    <!-- Death Modal -->
+    <div id="death-modal" class="modal">
+        <div class="modal-content">
+            <h2>You Died!</h2>
+            <p id="death-message">Killed by <span id="killer-name">someone</span></p>
+            <div class="death-stats">
+                <div class="stat">
+                    <span class="label">Length</span>
+                    <span id="death-length" class="value">0</span>
+                </div>
+                <div class="stat">
+                    <span class="label">Kills</span>
+                    <span id="death-kills" class="value">0</span>
+                </div>
+                <div class="stat">
+                    <span class="label">Earnings</span>
+                    <span id="death-earnings" class="value">$0.00</span>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button id="respawn-btn" class="btn primary">Play Again</button>
+                <button id="quit-btn" class="btn secondary">Quit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cashout Modal -->
+    <div id="cashout-modal" class="modal">
+        <div class="modal-content">
+            <h2>Cashed Out!</h2>
+            <div class="cashout-stats">
+                <div class="stat big">
+                    <span class="label">Total Earnings</span>
+                    <span id="cashout-earnings" class="value">$0.00</span>
+                </div>
+                <div class="stat">
+                    <span class="label">Kills</span>
+                    <span id="cashout-kills" class="value">0</span>
+                </div>
+                <div class="stat">
+                    <span class="label">Play Time</span>
+                    <span id="cashout-time" class="value">0:00</span>
+                </div>
+            </div>
+            <button id="home-btn" class="btn primary">Back to Home</button>
+        </div>
+    </div>
+
+    <!-- Bounty Popup Container -->
+    <div id="bounty-popups"></div>
+
+    <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

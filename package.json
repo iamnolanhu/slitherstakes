@@ -1,0 +1,48 @@
+{
+  "name": "slitherstakes",
+  "version": "1.0.0",
+  "description": "Snake.io Battle Royale with micro-stakes kill bounties",
+  "main": "server/index.js",
+  "scripts": {
+    "build": "gulp build",
+    "start": "gulp run",
+    "watch": "gulp watch",
+    "test": "gulp test",
+    "dev": "gulp watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/iamnolanhu/slitherstakes.git"
+  },
+  "author": "iamnolanhu",
+  "license": "MIT",
+  "dependencies": {
+    "@babel/core": "^7.21.8",
+    "@babel/eslint-parser": "^7.21.8",
+    "@babel/preset-env": "^7.21.5",
+    "@flowglad/node": "^0.27.0",
+    "@hathora/cloud-sdk-typescript": "^2.25.6",
+    "babel-loader": "^9.1.2",
+    "chai": "^4.3.7",
+    "dotenv": "^17.2.3",
+    "eslint": "^8.40.0",
+    "eslint-plugin-import": "^2.27.5",
+    "express": "^4.18.2",
+    "gulp": "^4.0.2",
+    "gulp-babel": "^8.0.0",
+    "gulp-eslint": "^6.0.0",
+    "gulp-nodemon": "^2.5.0",
+    "gulp-todo": "^7.1.1",
+    "mocha": "^10.2.0",
+    "nodemon": "^3.0.1",
+    "pg": "^8.11.0",
+    "socket.io": "^4.6.1",
+    "socket.io-client": "^4.6.1",
+    "uuid": "^9.0.0",
+    "webpack": "^5.82.1",
+    "webpack-stream": "^7.0.0"
+  },
+  "devDependencies": {
+    "plugin-error": "^2.0.1"
+  }
+}
