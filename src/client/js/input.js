@@ -4,9 +4,10 @@
  */
 
 class Input {
-    constructor(canvas, camera) {
+    constructor(canvas, camera, game = null) {
         this.canvas = canvas;
         this.camera = camera;
+        this.game = game;
 
         // Mouse state
         this.mouseX = 0;
@@ -158,9 +159,13 @@ class Input {
         this.lastSendTime = now;
 
         if (this.onMove) {
+            // Use logical (CSS) dimensions for coordinate conversion
+            const logicalWidth = this.game?.logicalWidth || window.innerWidth;
+            const logicalHeight = this.game?.logicalHeight || window.innerHeight;
+
             // Convert screen coordinates to world coordinates
-            const worldX = this.camera.x + (this.mouseX - this.canvas.width / 2) / this.camera.zoom;
-            const worldY = this.camera.y + (this.mouseY - this.canvas.height / 2) / this.camera.zoom;
+            const worldX = this.camera.x + (this.mouseX - logicalWidth / 2) / this.camera.zoom;
+            const worldY = this.camera.y + (this.mouseY - logicalHeight / 2) / this.camera.zoom;
 
             this.onMove({ x: worldX, y: worldY });
         }

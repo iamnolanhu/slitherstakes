@@ -76,6 +76,52 @@ body {
     box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
 }
 
+.name-input input.error {
+    border-color: #ff4444;
+    animation: shake 0.3s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+.home-actions {
+    margin: 1.5rem 0;
+}
+
+.home-actions .btn {
+    padding: 0.75rem 2rem;
+}
+
+.local-stats {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.local-stats h4 {
+    color: #00ff88;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.stats-row {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: #aaa;
+}
+
+.stats-row span {
+    white-space: nowrap;
+}
+
 .tier-selection {
     margin: 2rem 0;
 }
@@ -192,6 +238,17 @@ body {
 .user-info #user-name {
     color: #00ff88;
     font-weight: bold;
+}
+
+.user-info .play-free-note {
+    font-size: 0.75rem;
+    color: #888;
+}
+
+.user-info .btn-small.primary {
+    background: linear-gradient(135deg, #00ff88, #00d4ff);
+    color: #000;
+    border: none;
 }
 
 .btn-small {

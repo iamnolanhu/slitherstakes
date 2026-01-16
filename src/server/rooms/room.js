@@ -14,10 +14,10 @@ const WORLD_HEIGHT = 4000;
 const FOOD_COUNT = 500;
 const _TICK_RATE = 60;
 
-// Bot configuration
-const MIN_BOTS = 2;
-const MAX_BOTS = 8;
-const INITIAL_BOTS = 5;
+// Bot configuration (disabled - set to 0 for no autospawn)
+const MIN_BOTS = 0;
+const MAX_BOTS = 0;
+const INITIAL_BOTS = 0;
 
 class Room {
     constructor(id, tier, io) {
@@ -55,19 +55,42 @@ class Room {
         return this.bots.size;
     }
 
+    isNameTaken(name) {
+        for (const [, player] of this.players) {
+            if (player.name.toLowerCase() === name.toLowerCase()) {
+                return true;
+            }
+        }
+        // Also check bot names
+        for (const [, bot] of this.bots) {
+            if (bot.name.toLowerCase() === name.toLowerCase()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     addPlayer(socketId, name, demoMode = false) {
+        // Ensure unique name in this room
+        let uniqueName = name;
+        let suffix = 1;
+        while (this.isNameTaken(uniqueName)) {
+            uniqueName = `${name}_${suffix}`;
+            suffix++;
+        }
+
         // Random spawn position
         const margin = 200;
         const x = margin + Math.random() * (this.worldWidth - margin * 2);
         const y = margin + Math.random() * (this.worldHeight - margin * 2);
 
-        // Create snake
-        const snake = new Snake(socketId, name, x, y);
+        // Create snake with unique name
+        const snake = new Snake(socketId, uniqueName, x, y);
         snake.value = demoMode ? 0 : this.tier.buy_in;
 
         this.snakes.set(socketId, snake);
         this.players.set(socketId, {
-            name,
+            name: uniqueName,
             socketId,
             demoMode,
             buyIn: demoMode ? 0 : this.tier.buy_in,

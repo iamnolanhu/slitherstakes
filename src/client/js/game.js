@@ -37,7 +37,7 @@ class Game {
 
         // Components
         this.renderer = new Renderer(this.ctx, this.world);
-        this.input = new Input(this.canvas, this.camera);
+        this.input = new Input(this.canvas, this.camera, this);
 
         // Callbacks
         this.onDeath = null;
@@ -61,11 +61,24 @@ class Game {
 
     resizeCanvas() {
         const dpr = window.devicePixelRatio || 1;
-        this.canvas.width = window.innerWidth * dpr;
-        this.canvas.height = window.innerHeight * dpr;
-        this.canvas.style.width = window.innerWidth + 'px';
-        this.canvas.style.height = window.innerHeight + 'px';
-        this.ctx.scale(dpr, dpr);
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+
+        // Store logical (CSS) dimensions for coordinate calculations
+        this.logicalWidth = width;
+        this.logicalHeight = height;
+        this.dpr = dpr;
+
+        // Set canvas physical size (actual pixels)
+        this.canvas.width = width * dpr;
+        this.canvas.height = height * dpr;
+
+        // Set CSS display size
+        this.canvas.style.width = width + 'px';
+        this.canvas.style.height = height + 'px';
+
+        // Scale context to match DPR - use setTransform to reset first
+        this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
 
     handleResize() {
@@ -151,15 +164,19 @@ class Game {
     }
 
     render() {
+        // Use logical dimensions for rendering calculations
+        const width = this.logicalWidth || window.innerWidth;
+        const height = this.logicalHeight || window.innerHeight;
+
         // Clear canvas
         this.ctx.fillStyle = '#0a0a15';
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.fillRect(0, 0, width, height);
 
         // Apply camera transform
         this.ctx.save();
         this.ctx.translate(
-            this.canvas.width / 2 - this.camera.x * this.camera.zoom,
-            this.canvas.height / 2 - this.camera.y * this.camera.zoom
+            width / 2 - this.camera.x * this.camera.zoom,
+            height / 2 - this.camera.y * this.camera.zoom
         );
         this.ctx.scale(this.camera.zoom, this.camera.zoom);
 
@@ -209,10 +226,12 @@ class Game {
 
         // Camera view rectangle
         if (this.mySnake) {
-            const viewWidth = (this.canvas.width / this.camera.zoom) * scale;
-            const viewHeight = (this.canvas.height / this.camera.zoom) * scale;
-            const viewX = (this.camera.x - this.canvas.width / 2 / this.camera.zoom) * scale;
-            const viewY = (this.camera.y - this.canvas.height / 2 / this.camera.zoom) * scale;
+            const logicalWidth = this.logicalWidth || window.innerWidth;
+            const logicalHeight = this.logicalHeight || window.innerHeight;
+            const viewWidth = (logicalWidth / this.camera.zoom) * scale;
+            const viewHeight = (logicalHeight / this.camera.zoom) * scale;
+            const viewX = (this.camera.x - logicalWidth / 2 / this.camera.zoom) * scale;
+            const viewY = (this.camera.y - logicalHeight / 2 / this.camera.zoom) * scale;
 
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
             ctx.lineWidth = 1;

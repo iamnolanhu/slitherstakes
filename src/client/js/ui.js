@@ -103,6 +103,14 @@ class UI {
                 this.showHome();
             });
         }
+
+        // Browse Rooms button
+        const browseBtn = document.getElementById('browse-rooms-btn');
+        if (browseBtn) {
+            browseBtn.addEventListener('click', () => {
+                if (this.onShowLobby) this.onShowLobby();
+            });
+        }
     }
 
     populateTiers() {
@@ -134,13 +142,18 @@ class UI {
     }
 
     joinTier(tierId, demoMode) {
-        const name = this.nameInput.value.trim() || 'Player';
+        const name = this.nameInput.value.trim();
 
+        // Require a name - don't use fallback
         if (name.length < 1) {
             this.nameInput.focus();
+            this.nameInput.classList.add('error');
+            // Remove error class after animation
+            setTimeout(() => this.nameInput.classList.remove('error'), 500);
             return;
         }
 
+        this.nameInput.classList.remove('error');
         if (this.onJoin) {
             this.onJoin(name, tierId, demoMode);
         }

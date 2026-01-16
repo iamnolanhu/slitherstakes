@@ -15,6 +15,48 @@ let rooms = [];
 let currentFilterTier = 'all';
 let roomPollingInterval = null;
 
+// Local stats persistence
+function saveLocalStats(earnings, kills) {
+    const stats = JSON.parse(localStorage.getItem('slither_stats') || '{}');
+    stats.totalEarnings = (stats.totalEarnings || 0) + earnings;
+    stats.totalKills = (stats.totalKills || 0) + kills;
+    stats.gamesPlayed = (stats.gamesPlayed || 0) + 1;
+    stats.lastPlayed = Date.now();
+    localStorage.setItem('slither_stats', JSON.stringify(stats));
+    updateStatsDisplay();
+}
+
+function loadLocalStats() {
+    return JSON.parse(localStorage.getItem('slither_stats') || '{ "totalEarnings": 0, "totalKills": 0, "gamesPlayed": 0 }');
+}
+
+function updateStatsDisplay() {
+    const stats = loadLocalStats();
+    const earningsEl = document.getElementById('total-earnings');
+    const killsEl = document.getElementById('total-kills');
+    const gamesEl = document.getElementById('total-games');
+
+    if (earningsEl) earningsEl.textContent = stats.totalEarnings.toFixed(2);
+    if (killsEl) killsEl.textContent = stats.totalKills;
+    if (gamesEl) gamesEl.textContent = stats.gamesPlayed;
+}
+
+// Show "Create Account" button for users who haven't signed in
+function showCreateAccountOption() {
+    const userInfoEl = document.getElementById('user-info');
+    if (userInfoEl && clerk) {
+        userInfoEl.style.display = 'flex';
+        userInfoEl.innerHTML = `
+            <button id="create-account-btn" class="btn-small primary">Create Account</button>
+            <span class="play-free-note">or play free without account</span>
+        `;
+
+        document.getElementById('create-account-btn')?.addEventListener('click', () => {
+            clerk.openSignUp();
+        });
+    }
+}
+
 // Initialize on load
 window.addEventListener('DOMContentLoaded', async () => {
     console.log('[SLITHER] Initializing SlitherStakes...');
@@ -39,6 +81,9 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     // Initialize Clerk (authentication)
     await initClerk();
+
+    // Load and display local stats
+    updateStatsDisplay();
 
     // Initialize UI
     ui = new UI(config);
@@ -113,6 +158,8 @@ async function initClerk() {
                 }
             } else {
                 console.log('[CLERK] No user signed in');
+                // Show "Create Account" option for unauthenticated users
+                showCreateAccountOption();
             }
         }
     } catch (error) {
@@ -165,8 +212,18 @@ function handleFilterRooms(tier) {
 
 // Handle joining a specific room
 function handleJoinRoom(roomId, tierId) {
+    const name = document.getElementById('player-name')?.value?.trim();
+    if (!name || name.length < 1) {
+        const nameInput = document.getElementById('player-name');
+        if (nameInput) {
+            nameInput.focus();
+            nameInput.classList.add('error');
+            setTimeout(() => nameInput.classList.remove('error'), 500);
+        }
+        return;
+    }
+
     stopRoomPolling();
-    const name = document.getElementById('player-name')?.value?.trim() || 'Player';
     localStorage.setItem('slither_name', name);
 
     // For now, join with demo mode (free play)
@@ -178,9 +235,19 @@ function handleJoinRoom(roomId, tierId) {
 
 // Handle quick play (auto-join best room)
 function handleQuickPlay() {
-    stopRoomPolling();
     const name = document.getElementById('player-name')?.value?.trim() ||
-        localStorage.getItem('slither_name') || 'Player';
+        localStorage.getItem('slither_name');
+    if (!name || name.length < 1) {
+        const nameInput = document.getElementById('player-name');
+        if (nameInput) {
+            nameInput.focus();
+            nameInput.classList.add('error');
+            setTimeout(() => nameInput.classList.remove('error'), 500);
+        }
+        return;
+    }
+
+    stopRoomPolling();
     localStorage.setItem('slither_name', name);
 
     // Join free tier by default
@@ -227,6 +294,19 @@ async function handleJoin(name, tierId, demoMode) {
 }
 
 function connectToServer(name, tierId, demoMode, roomId = null) {
+    // Clean up existing socket to prevent memory leaks
+    if (socket) {
+        socket.removeAllListeners();
+        socket.disconnect();
+        socket = null;
+    }
+
+    // Clean up existing game
+    if (game) {
+        game.stop();
+        game = null;
+    }
+
     // Connect socket
     socket = io({
         transports: ['websocket', 'polling']
@@ -290,6 +370,8 @@ function connectToServer(name, tierId, demoMode, roomId = null) {
 
     socket.on('cashout', (data) => {
         console.log('[SOCKET] Cashed out:', data);
+        // Save stats to localStorage
+        saveLocalStats(data.earnings || 0, data.kills || 0);
         ui.showCashoutModal(data);
     });
 
