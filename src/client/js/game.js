@@ -114,7 +114,7 @@ class Game {
         this.animationFrame = requestAnimationFrame(this.loop);
     }
 
-    update(deltaTime) {
+    update(_deltaTime) {
         // Update camera to follow player
         if (this.mySnake && this.alive) {
             // Smooth camera follow

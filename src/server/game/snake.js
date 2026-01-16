@@ -9,7 +9,7 @@ const { v4: uuidv4 } = require('uuid');
 const SEGMENT_SPACING = 5;
 const BASE_SPEED = 3;
 const BOOST_SPEED = 6;
-const BOOST_MASS_COST = 0.5; // Mass lost per tick while boosting
+const _BOOST_MASS_COST = 0.5; // Mass lost per tick while boosting
 const HEAD_RADIUS = 15;
 const SEGMENT_RADIUS = 12;
 const INITIAL_LENGTH = 10;
@@ -117,8 +117,8 @@ class Snake {
         }
 
         // Move head forward
-        const prevX = this.x;
-        const prevY = this.y;
+        const _prevX = this.x;
+        const _prevY = this.y;
 
         this.x += Math.cos(this.angle) * this.speed;
         this.y += Math.sin(this.angle) * this.speed;

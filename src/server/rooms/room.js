@@ -11,7 +11,7 @@ const collision = require('../game/collision');
 const WORLD_WIDTH = 4000;
 const WORLD_HEIGHT = 4000;
 const FOOD_COUNT = 500;
-const TICK_RATE = 60;
+const _TICK_RATE = 60;
 
 class Room {
     constructor(id, tier, io) {

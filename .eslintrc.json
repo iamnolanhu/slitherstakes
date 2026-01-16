@@ -1,13 +1,16 @@
 {
     "env": {
         "browser": true,
-        "es2021": true,
+        "es6": true,
         "node": true
     },
     "extends": "eslint:recommended",
     "parserOptions": {
-        "ecmaVersion": "latest",
+        "ecmaVersion": 2020,
         "sourceType": "module"
+    },
+    "globals": {
+        "io": "readonly"
     },
     "rules": {
         "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],

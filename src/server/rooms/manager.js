@@ -210,7 +210,7 @@ class RoomManager {
         }
     }
 
-    async respawnPlayer(socketId, demoMode = false) {
+    async respawnPlayer(socketId, _demoMode = false) {
         const roomId = this.playerRooms.get(socketId);
         if (!roomId) return null;
 
