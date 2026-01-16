@@ -60,12 +60,26 @@ class Game {
     }
 
     resizeCanvas() {
-        this.canvas.width = window.innerWidth;
-        this.canvas.height = window.innerHeight;
+        const dpr = window.devicePixelRatio || 1;
+        this.canvas.width = window.innerWidth * dpr;
+        this.canvas.height = window.innerHeight * dpr;
+        this.canvas.style.width = window.innerWidth + 'px';
+        this.canvas.style.height = window.innerHeight + 'px';
+        this.ctx.scale(dpr, dpr);
     }
 
     handleResize() {
         this.resizeCanvas();
+    }
+
+    /**
+     * Trigger haptic feedback on supported devices
+     * @param {number|number[]} pattern - Vibration duration in ms, or pattern array [vibrate, pause, vibrate, ...]
+     */
+    vibrate(pattern) {
+        if ('vibrate' in navigator) {
+            navigator.vibrate(pattern);
+        }
     }
 
     start() {
@@ -78,6 +92,10 @@ class Game {
         };
         this.input.onBoost = (active) => {
             this.socket.emit('boost', { active });
+            // Haptic feedback when boost starts
+            if (active) {
+                this.vibrate(30);
+            }
         };
 
         // Start game loop
@@ -150,6 +168,9 @@ class Game {
         this.renderer.renderBorder();
         this.renderer.renderFood(this.food);
         this.renderer.renderSnakes(Array.from(this.snakes.values()), this.playerId);
+
+        // Render touch indicator for mobile users
+        this.renderer.renderTouchIndicator(this.ctx, this.input, this.mySnake, this.camera);
 
         this.ctx.restore();
 
@@ -238,6 +259,9 @@ class Game {
     handleDeath(data) {
         this.alive = false;
 
+        // Haptic feedback for death (double buzz pattern)
+        this.vibrate([100, 50, 100]);
+
         if (this.onDeath) {
             this.onDeath({
                 killerName: data.killerName,
@@ -254,6 +278,19 @@ class Game {
         this.snakes.set(data.snake.id, data.snake);
         this.camera.x = data.snake.x;
         this.camera.y = data.snake.y;
+    }
+
+    /**
+     * Handle kill event with haptic feedback
+     * @param {Object} data - Kill data from server
+     */
+    handleKill(data) {
+        // Haptic feedback for kill (short buzz)
+        this.vibrate(100);
+
+        if (this.onKill) {
+            this.onKill(data);
+        }
     }
 }
 

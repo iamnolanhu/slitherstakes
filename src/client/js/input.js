@@ -13,6 +13,9 @@ class Input {
         this.mouseY = 0;
         this.mouseDown = false;
 
+        // Touch state
+        this.touching = false;
+
         // Callbacks
         this.onMove = null;
         this.onBoost = null;
@@ -106,6 +109,7 @@ class Input {
 
     handleTouchStart(e) {
         e.preventDefault();
+        this.touching = true;
         if (e.touches.length > 0) {
             const touch = e.touches[0];
             this.mouseX = touch.clientX;
@@ -124,6 +128,7 @@ class Input {
 
     handleTouchMove(e) {
         e.preventDefault();
+        this.touching = true;
         if (e.touches.length > 0) {
             const touch = e.touches[0];
             this.mouseX = touch.clientX;
@@ -134,6 +139,9 @@ class Input {
 
     handleTouchEnd(e) {
         e.preventDefault();
+        if (e.touches.length === 0) {
+            this.touching = false;
+        }
         if (e.touches.length < 2) {
             this.mouseDown = false;
             if (this.onBoost) {
@@ -156,6 +164,14 @@ class Input {
 
             this.onMove({ x: worldX, y: worldY });
         }
+    }
+
+    isTouching() {
+        return this.touching;
+    }
+
+    getTouchPosition() {
+        return { x: this.mouseX, y: this.mouseY };
     }
 }
 

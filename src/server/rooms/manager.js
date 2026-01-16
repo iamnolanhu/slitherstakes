@@ -107,7 +107,7 @@ class RoomManager {
         }
     }
 
-    async joinRoom(socket, name, tierId, demoMode = false) {
+    async joinRoom(socket, name, tierId, demoMode = false, specificRoomId = null) {
         // Get tier config
         let tier = this.tiers.get(tierId);
         if (!tier) {
@@ -115,8 +115,15 @@ class RoomManager {
             tier = this.tiers.get(1) || { id: 1, name: 'Free', buy_in: 0, platform_fee: 0.20 };
         }
 
-        // Find or create room for this tier
-        let room = this.findAvailableRoom(tier.id);
+        // Join specific room if provided, otherwise find or create
+        let room = null;
+        if (specificRoomId && this.rooms.has(specificRoomId)) {
+            room = this.rooms.get(specificRoomId);
+            // Override tier to match the room's tier
+            tier = room.tier;
+        } else {
+            room = this.findAvailableRoom(tier.id);
+        }
 
         if (!room) {
             room = await this.createRoom(tier);
@@ -124,6 +131,9 @@ class RoomManager {
 
         // Add player to room
         const result = room.addPlayer(socket.id, name, demoMode);
+
+        // Adjust bot count when real player joins
+        room.adjustBotCount();
 
         // Track player's room
         this.playerRooms.set(socket.id, room.id);
@@ -134,7 +144,7 @@ class RoomManager {
         // Log session to database
         db.logSession(room.id, socket.id, name, demoMode ? 0 : tier.buy_in);
 
-        console.log(`[ROOMS] ${name} joined room ${room.id} (tier: ${tier.name}, players: ${room.playerCount})`);
+        console.log(`[ROOMS] ${name} joined room ${room.id} (tier: ${tier.name}, players: ${room.playerCount}, bots: ${room.botCount})`);
 
         return {
             ...result,
@@ -184,6 +194,9 @@ class RoomManager {
 
         // Log room to database
         db.createRoom(roomId, tier.id, hathoraRoomId);
+
+        // Spawn initial bots
+        room.spawnBots(5);
 
         console.log(`[ROOMS] Created new room: ${roomId} (tier: ${tier.name})`);
 
@@ -239,6 +252,9 @@ class RoomManager {
         room.removePlayer(socketId);
         this.playerRooms.delete(socketId);
 
+        // Adjust bot count when player leaves
+        room.adjustBotCount();
+
         // Update database
         db.updateSessionCashout(socketId, earnings, player.kills);
 
@@ -261,6 +277,8 @@ class RoomManager {
         const room = this.rooms.get(roomId);
         if (room) {
             room.removePlayer(socketId);
+            // Adjust bot count when player leaves
+            room.adjustBotCount();
         }
 
         this.playerRooms.delete(socketId);
@@ -271,9 +289,11 @@ class RoomManager {
         for (const [id, room] of this.rooms) {
             rooms.push({
                 id,
+                tierId: room.tier.id,
                 tier: room.tier.name,
                 buyIn: room.tier.buy_in,
-                playerCount: room.playerCount
+                playerCount: room.playerCount,
+                maxPlayers: 50
             });
         }
         return rooms;

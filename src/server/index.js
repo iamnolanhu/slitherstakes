@@ -77,13 +77,13 @@ app.get('/api/verify-payment/:sessionId', async (req, res) => {
 io.on('connection', (socket) => {
     console.log(`[SOCKET] Player connected: ${socket.id}`);
 
-    // Join a room by tier
+    // Join a room by tier (optionally specify roomId)
     socket.on('join', async (data) => {
-        const { name, tierId, demoMode } = data;
-        console.log(`[SOCKET] ${name} joining tier ${tierId}`);
+        const { name, tierId, demoMode, roomId } = data;
+        console.log(`[SOCKET] ${name} joining tier ${tierId}${roomId ? ` (room: ${roomId})` : ''}`);
 
         try {
-            const result = await roomManager.joinRoom(socket, name, tierId, demoMode);
+            const result = await roomManager.joinRoom(socket, name, tierId, demoMode, roomId);
             socket.emit('joined', result);
         } catch (error) {
             console.error('[SOCKET] Join error:', error);

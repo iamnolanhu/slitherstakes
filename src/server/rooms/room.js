@@ -6,12 +6,18 @@
 const Snake = require('../game/snake');
 const FoodManager = require('../game/food');
 const collision = require('../game/collision');
+const { BotPlayer } = require('../game/bot');
 
 // World configuration
 const WORLD_WIDTH = 4000;
 const WORLD_HEIGHT = 4000;
 const FOOD_COUNT = 500;
 const _TICK_RATE = 60;
+
+// Bot configuration
+const MIN_BOTS = 2;
+const MAX_BOTS = 8;
+const INITIAL_BOTS = 5;
 
 class Room {
     constructor(id, tier, io) {
@@ -22,6 +28,7 @@ class Room {
         // Game state
         this.snakes = new Map(); // socketId -> Snake
         this.players = new Map(); // socketId -> playerData
+        this.bots = new Map(); // botId -> BotPlayer
         this.food = new FoodManager(WORLD_WIDTH, WORLD_HEIGHT, FOOD_COUNT);
 
         // Room config
@@ -38,6 +45,14 @@ class Room {
 
     get playerCount() {
         return this.snakes.size;
+    }
+
+    get realPlayerCount() {
+        return this.players.size;
+    }
+
+    get botCount() {
+        return this.bots.size;
     }
 
     addPlayer(socketId, name, demoMode = false) {
@@ -125,10 +140,118 @@ class Room {
         };
     }
 
+    // Bot management
+    spawnBots(count) {
+        for (let i = 0; i < count; i++) {
+            const bot = new BotPlayer(this);
+
+            // Random spawn position
+            const margin = 200;
+            const x = margin + Math.random() * (this.worldWidth - margin * 2);
+            const y = margin + Math.random() * (this.worldHeight - margin * 2);
+
+            // Create snake for bot
+            const snake = new Snake(bot.id, bot.name, x, y);
+            snake.value = 0; // Bots have no monetary value
+            snake.isBot = true;
+
+            this.snakes.set(bot.id, snake);
+            this.bots.set(bot.id, bot);
+
+            console.log(`[BOTS] Spawned ${bot.name} in room ${this.id}`);
+        }
+    }
+
+    removeBots(count) {
+        let removed = 0;
+        for (const [botId, bot] of this.bots) {
+            if (removed >= count) break;
+
+            const snake = this.snakes.get(botId);
+            if (snake && snake.alive) {
+                // Drop food when removing
+                const droppedFood = snake.toFood();
+                this.food.addSnakeFood(droppedFood);
+            }
+
+            this.snakes.delete(botId);
+            this.bots.delete(botId);
+            removed++;
+
+            console.log(`[BOTS] Removed ${bot.name} from room ${this.id}`);
+        }
+        return removed;
+    }
+
+    removeAllBots() {
+        return this.removeBots(this.bots.size);
+    }
+
+    respawnBot(botId) {
+        const bot = this.bots.get(botId);
+        if (!bot) return;
+
+        // Remove old snake
+        this.snakes.delete(botId);
+
+        // Create new snake
+        const margin = 200;
+        const x = margin + Math.random() * (this.worldWidth - margin * 2);
+        const y = margin + Math.random() * (this.worldHeight - margin * 2);
+
+        const snake = new Snake(bot.id, bot.name, x, y);
+        snake.value = 0;
+        snake.isBot = true;
+
+        this.snakes.set(bot.id, snake);
+    }
+
+    adjustBotCount() {
+        const realPlayers = this.realPlayerCount;
+
+        if (realPlayers === 0) {
+            // No real players - spawn initial bots
+            const botsNeeded = INITIAL_BOTS - this.botCount;
+            if (botsNeeded > 0) {
+                this.spawnBots(botsNeeded);
+            }
+        } else {
+            // Real players present - maintain minimum bots
+            const targetBots = Math.max(MIN_BOTS, MAX_BOTS - realPlayers);
+            const currentBots = this.botCount;
+
+            if (currentBots < targetBots) {
+                this.spawnBots(targetBots - currentBots);
+            } else if (currentBots > targetBots) {
+                this.removeBots(currentBots - targetBots);
+            }
+        }
+    }
+
     // Main game tick
     update() {
         const snakeArray = Array.from(this.snakes.values());
         const kills = [];
+
+        // Process bot AI and apply inputs
+        for (const [botId, bot] of this.bots) {
+            const snake = this.snakes.get(botId);
+            if (!snake || !snake.alive) {
+                // Respawn dead bot after delay
+                if (snake && !snake.alive) {
+                    setTimeout(() => this.respawnBot(botId), 2000);
+                }
+                continue;
+            }
+
+            // Bot thinks and decides next move
+            bot.think(this.snakes, this.food, this.worldWidth, this.worldHeight);
+
+            // Apply bot input
+            const input = bot.getInput();
+            snake.targetAngle = input.angle;
+            snake.setBoost(input.boost);
+        }
 
         // Update all snakes
         for (const snake of snakeArray) {

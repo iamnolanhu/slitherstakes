@@ -14,6 +14,11 @@
             <h1 class="title">SlitherStakes</h1>
             <p class="subtitle">Snake Battle Royale with Kill Bounties</p>
 
+            <div id="user-info" class="user-info" style="display: none;">
+                <span id="user-name"></span>
+                <button id="logout-btn" class="btn-small">Logout</button>
+            </div>
+
             <div class="name-input">
                 <input type="text" id="player-name" placeholder="Enter your name" maxlength="16" autocomplete="off">
             </div>
@@ -37,6 +42,28 @@
 
             <div class="controls-info">
                 <p><strong>Controls:</strong> Mouse to steer | Click/Space to boost</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lobby Screen -->
+    <div id="lobby-screen" class="screen">
+        <div class="container">
+            <h1 class="title">Game Lobby</h1>
+            <p class="subtitle">Select a room to join</p>
+            <div class="lobby-tabs">
+                <button class="tab-btn active" data-tier="all">All</button>
+                <button class="tab-btn" data-tier="1">Free</button>
+                <button class="tab-btn" data-tier="2">Micro</button>
+                <button class="tab-btn" data-tier="3">Low</button>
+                <button class="tab-btn" data-tier="4">Medium</button>
+            </div>
+            <div id="room-list" class="room-list">
+                <p class="loading">Loading rooms...</p>
+            </div>
+            <div class="lobby-actions">
+                <button id="quick-play-btn" class="btn primary">Quick Play</button>
+                <button id="back-btn" class="btn">Back</button>
             </div>
         </div>
     </div>
@@ -137,6 +164,7 @@
     <div id="bounty-popups"></div>
 
     <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>

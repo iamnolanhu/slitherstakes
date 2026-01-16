@@ -54,7 +54,12 @@ async function getRoomTiers() {
 
     try {
         const result = await pool.query('SELECT * FROM room_tiers ORDER BY buy_in');
-        return result.rows;
+        // Convert DECIMAL strings to numbers (pg library returns DECIMAL as strings)
+        return result.rows.map(row => ({
+            ...row,
+            buy_in: parseFloat(row.buy_in),
+            platform_fee: parseFloat(row.platform_fee)
+        }));
     } catch (error) {
         console.error('[DATABASE] getRoomTiers error:', error.message);
         return [
@@ -72,7 +77,13 @@ async function getTierById(tierId) {
 
     try {
         const result = await pool.query('SELECT * FROM room_tiers WHERE id = $1', [tierId]);
-        return result.rows[0];
+        const tier = result.rows[0];
+        // Convert DECIMAL strings to numbers (pg library returns DECIMAL as strings)
+        if (tier) {
+            tier.buy_in = parseFloat(tier.buy_in);
+            tier.platform_fee = parseFloat(tier.platform_fee);
+        }
+        return tier;
     } catch (error) {
         console.error('[DATABASE] getTierById error:', error.message);
         return null;

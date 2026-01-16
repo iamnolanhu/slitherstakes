@@ -20,6 +20,7 @@
     "@babel/core": "^7.21.8",
     "@babel/eslint-parser": "^7.21.8",
     "@babel/preset-env": "^7.21.5",
+    "@clerk/clerk-sdk-node": "^5.0.0",
     "@flowglad/node": "^0.27.0",
     "@hathora/cloud-sdk-typescript": "^2.25.6",
     "babel-loader": "^9.1.2",

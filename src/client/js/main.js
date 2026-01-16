@@ -10,6 +10,10 @@ let socket = null;
 let game = null;
 let ui = null;
 let config = null;
+let clerk = null;
+let rooms = [];
+let currentFilterTier = 'all';
+let roomPollingInterval = null;
 
 // Initialize on load
 window.addEventListener('DOMContentLoaded', async () => {
@@ -33,12 +37,19 @@ window.addEventListener('DOMContentLoaded', async () => {
         };
     }
 
+    // Initialize Clerk (authentication)
+    await initClerk();
+
     // Initialize UI
     ui = new UI(config);
     ui.onJoin = handleJoin;
     ui.onRespawn = handleRespawn;
     ui.onCashout = handleCashout;
     ui.onQuit = handleQuit;
+    ui.onShowLobby = handleShowLobby;
+    ui.onJoinRoom = handleJoinRoom;
+    ui.onQuickPlay = handleQuickPlay;
+    ui.onFilterRooms = handleFilterRooms;
 
     // Check for payment callback
     const params = new URLSearchParams(window.location.search);
@@ -59,6 +70,122 @@ window.addEventListener('DOMContentLoaded', async () => {
         }
     }
 });
+
+// Initialize Clerk authentication
+async function initClerk() {
+    // Replace with your Clerk publishable key
+    const CLERK_PUBLISHABLE_KEY = 'pk_test_c29saWQtbGlvbmZpc2gtNjguY2xlcmsuYWNjb3VudHMuZGV2JA';
+
+    if (CLERK_PUBLISHABLE_KEY === 'CLERK_PUBLISHABLE_KEY_PLACEHOLDER') {
+        console.log('[CLERK] No Clerk key configured, skipping authentication');
+        return;
+    }
+
+    try {
+        if (window.Clerk) {
+            clerk = new window.Clerk(CLERK_PUBLISHABLE_KEY);
+            await clerk.load();
+
+            if (clerk.user) {
+                console.log('[CLERK] User authenticated:', clerk.user.id);
+                const userInfoEl = document.getElementById('user-info');
+                const userNameEl = document.getElementById('user-name');
+                const logoutBtn = document.getElementById('logout-btn');
+
+                if (userInfoEl && userNameEl) {
+                    userInfoEl.style.display = 'flex';
+                    userNameEl.textContent = clerk.user.firstName ||
+                        clerk.user.emailAddresses?.[0]?.emailAddress ||
+                        'User';
+
+                    // Pre-fill player name from Clerk user
+                    const nameInput = document.getElementById('player-name');
+                    if (nameInput && !nameInput.value) {
+                        nameInput.value = clerk.user.firstName || '';
+                    }
+                }
+
+                if (logoutBtn) {
+                    logoutBtn.addEventListener('click', async () => {
+                        await clerk.signOut();
+                        window.location.reload();
+                    });
+                }
+            } else {
+                console.log('[CLERK] No user signed in');
+            }
+        }
+    } catch (error) {
+        console.error('[CLERK] Initialization error:', error);
+    }
+}
+
+// Fetch rooms from server
+async function fetchRooms() {
+    try {
+        const response = await fetch('/api/rooms');
+        rooms = await response.json();
+        console.log('[SLITHER] Fetched rooms:', rooms.length);
+        if (ui) {
+            ui.renderRooms(rooms, currentFilterTier);
+        }
+    } catch (error) {
+        console.error('[SLITHER] Failed to fetch rooms:', error);
+    }
+}
+
+// Start polling for room updates
+function startRoomPolling() {
+    if (roomPollingInterval) return;
+    fetchRooms();
+    roomPollingInterval = setInterval(fetchRooms, 5000);
+    console.log('[SLITHER] Room polling started');
+}
+
+// Stop polling for room updates
+function stopRoomPolling() {
+    if (roomPollingInterval) {
+        clearInterval(roomPollingInterval);
+        roomPollingInterval = null;
+        console.log('[SLITHER] Room polling stopped');
+    }
+}
+
+// Handle showing lobby
+function handleShowLobby() {
+    ui.showLobby();
+    startRoomPolling();
+}
+
+// Handle room filter change
+function handleFilterRooms(tier) {
+    currentFilterTier = tier;
+    ui.renderRooms(rooms, currentFilterTier);
+}
+
+// Handle joining a specific room
+function handleJoinRoom(roomId, tierId) {
+    stopRoomPolling();
+    const name = document.getElementById('player-name')?.value?.trim() || 'Player';
+    localStorage.setItem('slither_name', name);
+
+    // For now, join with demo mode (free play)
+    const tier = config.tiers?.find(t => t.id === tierId);
+    const demoMode = !tier || tier.buy_in === 0;
+
+    connectToServer(name, tierId, demoMode, roomId);
+}
+
+// Handle quick play (auto-join best room)
+function handleQuickPlay() {
+    stopRoomPolling();
+    const name = document.getElementById('player-name')?.value?.trim() ||
+        localStorage.getItem('slither_name') || 'Player';
+    localStorage.setItem('slither_name', name);
+
+    // Join free tier by default
+    connectToServer(name, 1, true);
+}
 
 // Handle join game
 async function handleJoin(name, tierId, demoMode) {
@@ -99,7 +226,7 @@ async function handleJoin(name, tierId, demoMode) {
     connectToServer(name, tierId, demoMode);
 }
 
-function connectToServer(name, tierId, demoMode) {
+function connectToServer(name, tierId, demoMode, roomId = null) {
     // Connect socket
     socket = io({
         transports: ['websocket', 'polling']
@@ -108,8 +235,8 @@ function connectToServer(name, tierId, demoMode) {
     socket.on('connect', () => {
         console.log('[SOCKET] Connected:', socket.id);
 
-        // Join game
-        socket.emit('join', { name, tierId, demoMode });
+        // Join game (optionally with specific room)
+        socket.emit('join', { name, tierId, demoMode, roomId });
     });
 
     socket.on('joined', (data) => {
@@ -139,6 +266,10 @@ function connectToServer(name, tierId, demoMode) {
         ui.addKillFeed(data);
         if (data.killerId === socket.id) {
             ui.showBountyPopup(data.bounty);
+            // Trigger haptic feedback via game controller
+            if (game) {
+                game.handleKill(data);
+            }
         }
     });
 
@@ -205,6 +336,7 @@ function handleQuit() {
         game.stop();
         game = null;
     }
+    stopRoomPolling();
     ui.showHome();
 }
 
@@ -212,5 +344,8 @@ function handleQuit() {
 window.slither = {
     getSocket: () => socket,
     getGame: () => game,
-    getConfig: () => config
+    getConfig: () => config,
+    getClerk: () => clerk,
+    getRooms: () => rooms,
+    showLobby: () => handleShowLobby()
 };

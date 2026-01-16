@@ -9,6 +9,7 @@ class UI {
 
         // Screens
         this.homeScreen = document.getElementById('home-screen');
+        this.lobbyScreen = document.getElementById('lobby-screen');
         this.gameScreen = document.getElementById('game-screen');
 
         // Modals
@@ -19,6 +20,10 @@ class UI {
         this.nameInput = document.getElementById('player-name');
         this.tierButtons = document.getElementById('tier-buttons');
 
+        // Lobby elements
+        this.roomList = document.getElementById('room-list');
+        this.lobbyTabs = document.querySelectorAll('.lobby-tabs .tab-btn');
+
         // HUD elements
         this.leaderboardList = document.getElementById('leaderboard-list');
         this.killFeed = document.getElementById('kill-feed');
@@ -28,6 +33,9 @@ class UI {
         this.onRespawn = null;
         this.onCashout = null;
         this.onQuit = null;
+        this.onShowLobby = null;
+        this.onJoinRoom = null;
+        this.onQuickPlay = null;
 
         // Initialize
         this.setupEventListeners();
@@ -66,6 +74,35 @@ class UI {
                 this.joinTier(1, true);
             }
         });
+
+        // Lobby tab buttons
+        this.lobbyTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                this.lobbyTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                const tier = tab.dataset.tier;
+                if (this.onFilterRooms) {
+                    this.onFilterRooms(tier);
+                }
+            });
+        });
+
+        // Quick Play button
+        const quickPlayBtn = document.getElementById('quick-play-btn');
+        if (quickPlayBtn) {
+            quickPlayBtn.addEventListener('click', () => {
+                if (this.onQuickPlay) this.onQuickPlay();
+            });
+        }
+
+        // Back button
+        const backBtn = document.getElementById('back-btn');
+        if (backBtn) {
+            backBtn.addEventListener('click', () => {
+                this.hideLobby();
+                this.showHome();
+            });
+        }
     }
 
     populateTiers() {
@@ -111,12 +148,72 @@ class UI {
 
     showHome() {
         this.homeScreen.classList.add('active');
+        this.lobbyScreen.classList.remove('active');
         this.gameScreen.classList.remove('active');
+    }
+
+    showLobby() {
+        this.homeScreen.classList.remove('active');
+        this.lobbyScreen.classList.add('active');
+        this.gameScreen.classList.remove('active');
+    }
+
+    hideLobby() {
+        this.lobbyScreen.classList.remove('active');
     }
 
     showGame() {
         this.homeScreen.classList.remove('active');
+        this.lobbyScreen.classList.remove('active');
         this.gameScreen.classList.add('active');
+    }
+
+    renderRooms(rooms, filterTier = 'all') {
+        if (!this.roomList) return;
+
+        // Filter rooms by tier
+        let filteredRooms = rooms;
+        if (filterTier !== 'all') {
+            const tierId = parseInt(filterTier);
+            filteredRooms = rooms.filter(room => room.tierId === tierId);
+        }
+
+        // Clear and render
+        this.roomList.innerHTML = '';
+
+        if (filteredRooms.length === 0) {
+            this.roomList.innerHTML = '<p class="no-rooms">No rooms available. Click Quick Play to create one!</p>';
+            return;
+        }
+
+        for (const room of filteredRooms) {
+            const tierInfo = this.config.tiers?.find(t => t.id === room.tierId) || { name: 'Unknown', buy_in: 0 };
+            const card = document.createElement('div');
+            card.className = 'room-card';
+            card.innerHTML = `
+                <div class="room-info">
+                    <div class="room-tier">${this.escapeHtml(tierInfo.name)} Room</div>
+                    <div class="room-players">${room.playerCount}/${room.maxPlayers} players</div>
+                    <div class="room-buy-in">${tierInfo.buy_in > 0 ? '$' + tierInfo.buy_in.toFixed(2) : 'Free'}</div>
+                </div>
+                <button class="room-join-btn">Join</button>
+            `;
+
+            card.querySelector('.room-join-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (this.onJoinRoom) {
+                    this.onJoinRoom(room.id, room.tierId);
+                }
+            });
+
+            card.addEventListener('click', () => {
+                if (this.onJoinRoom) {
+                    this.onJoinRoom(room.id, room.tierId);
+                }
+            });
+
+            this.roomList.appendChild(card);
+        }
     }
 
     showDeathModal(data) {

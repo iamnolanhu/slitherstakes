@@ -11,14 +11,16 @@ body {
     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
     color: #fff;
     min-height: 100vh;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 /* Screens */
 .screen {
     display: none;
     width: 100%;
-    height: 100vh;
+    min-height: 100vh;
+    height: auto;
 }
 
 .screen.active {
@@ -29,6 +31,8 @@ body {
 #home-screen {
     justify-content: center;
     align-items: center;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .container {
@@ -172,6 +176,156 @@ body {
     font-size: 0.9rem;
 }
 
+/* User Info */
+.user-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    background: rgba(0, 255, 136, 0.1);
+    border: 1px solid rgba(0, 255, 136, 0.3);
+    border-radius: 8px;
+}
+
+.user-info #user-name {
+    color: #00ff88;
+    font-weight: bold;
+}
+
+.btn-small {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+    font-weight: bold;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-small:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Lobby Screen */
+#lobby-screen {
+    justify-content: center;
+    align-items: center;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.lobby-tabs {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.tab-btn {
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.9rem;
+}
+
+.tab-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.tab-btn.active {
+    background: var(--primary-color, #4ecdc4);
+    border-color: var(--primary-color, #4ecdc4);
+}
+
+.room-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 50vh;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+}
+
+.room-list .loading,
+.room-list .no-rooms {
+    text-align: center;
+    color: #888;
+    padding: 2rem;
+}
+
+.room-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.room-card:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(0, 212, 255, 0.5);
+}
+
+.room-info {
+    text-align: left;
+}
+
+.room-tier {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #00d4ff;
+}
+
+.room-players {
+    opacity: 0.7;
+    font-size: 0.9rem;
+    margin-top: 0.25rem;
+}
+
+.room-buy-in {
+    font-size: 0.85rem;
+    color: #00ff88;
+    margin-top: 0.25rem;
+}
+
+.room-join-btn {
+    padding: 0.5rem 1rem;
+    background: var(--primary-color, #4ecdc4);
+    border: none;
+    border-radius: 4px;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s ease;
+}
+
+.room-join-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 3px 10px rgba(78, 205, 196, 0.4);
+}
+
+.lobby-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
 /* Game Screen */
 #game-screen {
     position: relative;
@@ -192,6 +346,9 @@ body {
     display: flex;
     justify-content: space-between;
     padding: 1rem;
+    padding-top: env(safe-area-inset-top);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
     pointer-events: none;
 }
 
@@ -507,4 +664,153 @@ body {
         width: 100px;
         height: 100px;
     }
+}
+
+@media (max-width: 480px) {
+    /* Title and text scaling */
+    .title {
+        font-size: 2rem;
+    }
+
+    .subtitle {
+        font-size: 1rem;
+    }
+
+    .container {
+        padding: 1rem;
+    }
+
+    /* HUD vertical stack layout */
+    #hud {
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .hud-left, .hud-right {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .hud-item {
+        padding: 0.4rem 0.8rem;
+    }
+
+    .hud-item .label {
+        font-size: 0.56rem;
+    }
+
+    .hud-item .value {
+        font-size: 0.96rem;
+    }
+
+    /* Touch-friendly buttons */
+    .tier-btn {
+        min-height: 44px;
+        padding: 0.8rem 1.2rem;
+        font-size: 0.9rem;
+    }
+
+    .cashout-btn {
+        min-height: 44px;
+        padding: 0.6rem 1.2rem;
+        font-size: 0.9rem;
+    }
+
+    .btn {
+        min-height: 44px;
+        padding: 0.6rem 1.5rem;
+        font-size: 0.9rem;
+    }
+
+    /* Further reduce minimap size */
+    .minimap {
+        width: 70px;
+        height: 70px;
+    }
+
+    #minimap-canvas {
+        width: 70px;
+        height: 70px;
+    }
+
+    /* Kill feed adjustments */
+    .kill-feed {
+        top: auto;
+        bottom: 6rem;
+        left: 0.5rem;
+    }
+
+    .kill-entry {
+        font-size: 0.7rem;
+        padding: 0.4rem 0.6rem;
+    }
+
+    /* Modal mobile constraints */
+    .modal {
+        max-width: 90vw;
+        max-height: 85vh;
+        overflow-y: auto;
+    }
+
+    .modal-content {
+        padding: 1.5rem;
+        max-width: 90vw;
+    }
+
+    .modal-content h2 {
+        font-size: 1.6rem;
+    }
+
+    .death-stats, .cashout-stats {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .stat {
+        padding: 0.75rem;
+        min-width: 60px;
+    }
+
+    .stat.big {
+        min-width: 150px;
+    }
+
+    .stat .label {
+        font-size: 0.6rem;
+    }
+
+    .stat .value {
+        font-size: 1.2rem;
+    }
+
+    .cashout-stats .stat.big .value {
+        font-size: 1.6rem;
+    }
+
+    /* Bounty popup scaling */
+    .bounty-popup {
+        font-size: 1.2rem;
+    }
+
+    /* Info box adjustments */
+    .info-box {
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+
+    .info-box li {
+        padding: 0.4rem 0;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 380px) {
+    .container { padding: 0.5rem; }
+    .tier-buttons { gap: 0.5rem; }
+    .tier-btn { padding: 0.5rem 0.75rem; font-size: 0.8rem; }
+    .info-box { padding: 0.75rem; }
+    h1.title { font-size: 1.5rem; }
+    .subtitle { font-size: 0.9rem; }
 }

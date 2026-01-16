@@ -10,6 +10,18 @@ class Renderer {
         this.gridSize = 50;
     }
 
+    /**
+     * Get scaled font size based on viewport width for mobile responsiveness
+     * @param {number} baseSize - The base font size in pixels
+     * @returns {number} The scaled font size
+     */
+    getScaledFontSize(baseSize) {
+        const width = window.innerWidth;
+        if (width <= 480) return Math.max(baseSize * 0.8, 12);
+        if (width <= 768) return Math.max(baseSize * 0.9, 12);
+        return baseSize;
+    }
+
     renderGrid(camera) {
         const ctx = this.ctx;
         const gridSize = this.gridSize;
@@ -206,7 +218,11 @@ class Renderer {
         const ctx = this.ctx;
         const nameY = snake.y - headRadius - 20;
 
-        ctx.font = 'bold 14px Roboto, sans-serif';
+        // Use scaled font sizes for mobile responsiveness
+        const nameFontSize = this.getScaledFontSize(14);
+        const lengthFontSize = this.getScaledFontSize(12);
+
+        ctx.font = `bold ${nameFontSize}px Roboto, sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
@@ -219,7 +235,7 @@ class Renderer {
         ctx.fillText(snake.name, snake.x, nameY);
 
         // Length indicator
-        ctx.font = '12px Roboto, sans-serif';
+        ctx.font = `${lengthFontSize}px Roboto, sans-serif`;
         ctx.fillStyle = '#00ff88';
         ctx.fillText(`${snake.length}`, snake.x, nameY + 16);
     }
@@ -263,6 +279,60 @@ class Renderer {
         }
 
         return Math.round(h * 360);
+    }
+
+    /**
+     * Render touch indicator showing touch position and line to snake head
+     * @param {CanvasRenderingContext2D} ctx - Canvas context
+     * @param {Input} input - Input handler instance
+     * @param {Object} playerSnake - Player's snake object
+     * @param {Object} camera - Camera object with x, y, zoom
+     */
+    renderTouchIndicator(ctx, input, playerSnake, camera) {
+        if (!input.isTouching() || !playerSnake) return;
+
+        const touchPos = input.getTouchPosition();
+
+        // Convert touch screen coordinates to world coordinates
+        const dpr = window.devicePixelRatio || 1;
+        const worldTouchX = camera.x + (touchPos.x - ctx.canvas.width / 2 / dpr) / camera.zoom;
+        const worldTouchY = camera.y + (touchPos.y - ctx.canvas.height / 2 / dpr) / camera.zoom;
+
+        // Draw dashed line from snake head to touch point
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([10, 10]);
+        ctx.beginPath();
+        ctx.moveTo(playerSnake.x, playerSnake.y);
+        ctx.lineTo(worldTouchX, worldTouchY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+
+        // Draw semi-transparent circle at touch position
+        ctx.save();
+        const touchRadius = 30;
+        const gradient = ctx.createRadialGradient(
+            worldTouchX, worldTouchY, 0,
+            worldTouchX, worldTouchY, touchRadius
+        );
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
+        gradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.15)');
+        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(worldTouchX, worldTouchY, touchRadius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Draw outer ring
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(worldTouchX, worldTouchY, touchRadius * 0.8, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
     }
 }
 
